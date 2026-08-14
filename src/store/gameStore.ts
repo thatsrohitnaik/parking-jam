@@ -3,6 +3,7 @@ import { Game } from '../engine/Game';
 import { Level } from '../engine/Level';
 import { LEVELS } from '../engine/levels';
 import type { Direction } from '../engine/types';
+import type { CarThemeName } from '../utils/theme';
 
 export interface CarViewData {
   id: string;
@@ -16,6 +17,7 @@ export interface CarViewData {
 export interface GameSettings {
   hapticsEnabled: boolean;
   soundEnabled: boolean;
+  carTheme: CarThemeName;
 }
 
 interface ParkingStore {
@@ -34,7 +36,7 @@ interface ParkingStore {
   levelCompleted: boolean;
   settings: GameSettings;
 
-  tryMove: (id: string, dir: Direction, distance: number) => boolean;
+  tryMove: (id: string, dir: Direction, distance: number) => number;
   undo: () => void;
   redo: () => void;
   resetLevel: () => void;
@@ -74,7 +76,7 @@ function snapshot(game: Game) {
 }
 
 export function createDefaultSettings(): GameSettings {
-  return { hapticsEnabled: true, soundEnabled: true };
+  return { hapticsEnabled: true, soundEnabled: true, carTheme: 'classic' };
 }
 
 const initialGame = new Game();
@@ -87,18 +89,18 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
 
   tryMove: (id, dir, distance) => {
     const game = get().game;
-    if (game.isFinished()) return false;
+    if (game.isFinished()) return 0;
     const car = game.getLevel().getVehiclesMap().get(id);
-    if (!car) return false;
+    if (!car) return 0;
     const before = game.getLevelNumber();
-    const ok = game.moveCar(car, dir, distance);
-    if (ok) {
+    const moved = game.moveCar(car, dir, distance);
+    if (moved > 0) {
       set((state) => ({
         ...snapshot(game),
         levelCompleted: before !== game.getLevelNumber() && !game.isFinished(),
       }));
     }
-    return ok;
+    return moved;
   },
 
   undo: () => {

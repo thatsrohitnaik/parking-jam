@@ -110,6 +110,68 @@ export class Level {
     return false;
   }
 
+  // Performs a move, clamping the requested distance to the maximum the
+  // vehicle can actually travel (so a drag that overshoots lands on the
+  // last free cell instead of being fully rejected). Returns the number of
+  // cells moved (0 if blocked).
+  attemptMove(vehicle: Car, direction: Direction, requested: number): number {
+    if (requested <= 0) return 0;
+    const distance = this.maxMoveDistance(vehicle, direction, requested);
+    if (distance <= 0) return 0;
+    this.moveCar(vehicle, direction, distance, false, false);
+    return distance;
+  }
+
+  // Largest distance (<= requested) the vehicle can move in `direction`
+  // without hitting another vehicle or a wall. Pure: no board mutation.
+  maxMoveDistance(vehicle: Car, direction: Direction, requested: number): number {
+    for (let d = requested; d >= 1; d--) {
+      if (this.clearFor(vehicle, direction, d)) return d;
+    }
+    return 0;
+  }
+
+  private clearFor(vehicle: Car, direction: Direction, distance: number): boolean {
+    const tiles = this.board.getTiles();
+    const orientation = vehicle.getOrientation();
+    const isRed = vehicle.isRedCar();
+    const passable = (t: Tile) => t === ' ' || (t === '@' && isRed);
+
+    if (orientation === 'H') {
+      const row = vehicle.getCurrentPositionX();
+      const col = vehicle.getCurrentPositionY();
+      if (direction === 'L') {
+        if (col - distance <= 0) return false;
+        for (let i = col - 1; i >= col - distance; i--) {
+          if (!passable(tiles[row][i])) return false;
+        }
+        return true;
+      }
+      const size = vehicle.getLength();
+      if (col + size + distance - 1 >= tiles[0].length) return false;
+      for (let i = col + size; i <= col + size + distance - 1; i++) {
+        if (!passable(tiles[row][i])) return false;
+      }
+      return true;
+    }
+
+    const row = vehicle.getCurrentPositionX();
+    const col = vehicle.getCurrentPositionY();
+    if (direction === 'U') {
+      if (row - distance <= 0) return false;
+      for (let i = row - 1; i >= row - distance; i--) {
+        if (!passable(tiles[i][col])) return false;
+      }
+      return true;
+    }
+    const size = vehicle.getLength();
+    if (row + size + distance - 1 >= tiles.length) return false;
+    for (let i = row + size; i <= row + size + distance - 1; i++) {
+      if (!passable(tiles[i][col])) return false;
+    }
+    return true;
+  }
+
   moveCar(vehicle: Car, direction: Direction, distance: number, undo: boolean, redo: boolean): boolean {
     if (redo) {
       direction = this.invert(direction);

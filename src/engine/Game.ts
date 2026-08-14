@@ -13,16 +13,16 @@ export class Game {
     this.newGame();
   }
 
-  moveCar(car: Car, dir: Direction, distance: number): boolean {
-    if (this.finished || !this.level.moveCar(car, dir, distance, false, false)) {
-      return false;
-    }
+  moveCar(car: Car, dir: Direction, requested: number): number {
+    if (this.finished) return 0;
+    const moved = this.level.attemptMove(car, dir, requested);
+    if (moved === 0) return 0;
     if (this.level.checkStatus()) {
       this.levelNumber++;
       this.score += this.level.getScore();
       this.levelLoad();
     }
-    return true;
+    return moved;
   }
 
   newGame(): void {

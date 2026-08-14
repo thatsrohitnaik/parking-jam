@@ -42,9 +42,11 @@ export default function GameScreen({ navigation }: Props) {
 
   const onMove = useCallback(
     (id: string, dir: Direction, distance: number) => {
-      if (tryMove(id, dir, distance)) {
+      const moved = tryMove(id, dir, distance);
+      if (moved > 0) {
         success();
       }
+      return moved;
     },
     [tryMove, success],
   );
@@ -67,7 +69,7 @@ export default function GameScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.boardArea}>
-        <Board rows={rows} cols={cols} tiles={tiles} cars={cars} tileSize={tileSize} onMove={onMove} />
+        <Board rows={rows} cols={cols} tiles={tiles} cars={cars} tileSize={tileSize} levelKey={levelNumber} onMove={onMove} />
       </View>
 
       <View style={[styles.controls, { paddingBottom: insets.bottom + 16 }]}>

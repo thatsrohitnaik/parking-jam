@@ -34,7 +34,7 @@ function solveLevel(game: Game, levelIndex: number): void {
   const level = game.getLevel();
   const moves = SOLUTIONS[levelIndex];
   for (const [id, dir, distance] of moves) {
-    expect(game.moveCar(level.getVehiclesMap().get(id)!, dir, distance)).toBe(true);
+    expect(game.moveCar(level.getVehiclesMap().get(id)!, dir, distance)).toBeGreaterThan(0);
   }
 }
 

@@ -11,10 +11,11 @@ interface BoardProps {
   tiles: string[];
   cars: CarViewData[];
   tileSize: number;
-  onMove: (id: string, dir: Direction, distance: number) => void;
+  levelKey?: number;
+  onMove: (id: string, dir: Direction, distance: number) => number;
 }
 
-export function Board({ rows, cols, tiles, cars, tileSize, onMove }: BoardProps) {
+export function Board({ rows, cols, tiles, cars, tileSize, levelKey = 0, onMove }: BoardProps) {
   return (
     <View
       style={{
@@ -49,7 +50,7 @@ export function Board({ rows, cols, tiles, cars, tileSize, onMove }: BoardProps)
       </View>
 
       {cars.map((car) => (
-        <CarView key={car.id} car={car} tileSize={tileSize} onMove={onMove} />
+        <CarView key={`${levelKey}-${car.id}`} car={car} tileSize={tileSize} onMove={onMove} />
       ))}
     </View>
   );
