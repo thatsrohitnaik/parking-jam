@@ -22,13 +22,11 @@ const SPRING = { damping: 20, stiffness: 210, mass: 1 } as const;
 interface CarViewProps {
   car: CarViewData;
   tileSize: number;
-  rows: number;
-  cols: number;
   // Returns the number of cells actually moved (0 if blocked).
   onMove: (id: string, dir: Direction, distance: number) => number;
 }
 
-export function CarView({ car, tileSize, rows, cols, onMove }: CarViewProps) {
+export function CarView({ car, tileSize, onMove }: CarViewProps) {
   // `base` is the animated grid position (px); `drag` is the live finger offset.
   // Rendered position = base + drag, so both can be sprung independently.
   const baseX = useSharedValue(car.y * tileSize);
@@ -68,12 +66,9 @@ export function CarView({ car, tileSize, rows, cols, onMove }: CarViewProps) {
     transform: [{ scale: 1 + selected.value * 0.05 }],
   }), [selected]);
 
-  // Selection ring + movement-guide lane fade in with `selected`.
+  // Selection ring fades in with `selected`.
   const ringStyle = useAnimatedStyle(() => ({
     opacity: selected.value * 0.9,
-  }), [selected]);
-  const guideStyle = useAnimatedStyle(() => ({
-    opacity: selected.value * 0.15,
   }), [selected]);
   const blockStyle = useAnimatedStyle(() => ({
     opacity: blocked.value,
@@ -291,17 +286,6 @@ export function CarView({ car, tileSize, rows, cols, onMove }: CarViewProps) {
       <Animated.View style={[styles.wrap, { width, height }, animatedStyle]}>
         {/* grounded drop shadow so the vehicle floats above the asphalt */}
         <View style={[styles.shadow, { width, height, borderRadius: bodyR, top: height * 0.06 }]} />
-        {/* movement-guide lane along the car's valid axis (shows while held) */}
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.guide,
-            guideStyle,
-            isH
-              ? { left: -car.y * tileSize, top: -car.x * tileSize, width: cols * tileSize, height: tileSize }
-              : { left: -car.y * tileSize, top: -car.x * tileSize, width: tileSize, height: rows * tileSize },
-          ]}
-        />
         {car.red && (
           <Animated.View
             style={[
@@ -371,11 +355,6 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 8 },
     elevation: 6,
-  },
-  guide: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderRadius: 6,
   },
   ring: {
     position: 'absolute',

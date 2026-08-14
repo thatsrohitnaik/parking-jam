@@ -220,7 +220,7 @@ export function Board({ rows, cols, tiles, cars, tileSize, levelKey = 0, onMove 
 
         {/* vehicles (rendered last so they sit above the background) */}
         {cars.map((car) => (
-          <CarView key={`${levelKey}-${car.id}`} car={car} tileSize={tileSize} rows={rows} cols={cols} onMove={onMove} />
+          <CarView key={`${levelKey}-${car.id}`} car={car} tileSize={tileSize} onMove={onMove} />
         ))}
       </View>
     </View>
