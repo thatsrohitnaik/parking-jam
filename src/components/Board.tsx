@@ -86,6 +86,9 @@ function ExitGate({ x, y, size, dir }: { x: number; y: number; size: number; dir
         pointerEvents: 'none',
         overflow: 'hidden',
         borderRadius: size * 0.16,
+        backgroundColor: 'rgba(34,197,94,0.30)',
+        borderWidth: 2,
+        borderColor: COLORS.exit,
       }}
     >
       {/* pulsing halo */}

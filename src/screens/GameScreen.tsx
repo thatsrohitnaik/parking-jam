@@ -73,9 +73,9 @@ export default function GameScreen({ navigation }: Props) {
       </View>
 
       <View style={[styles.controls, { paddingBottom: insets.bottom + 16 }]}>
-        <Button label="Undo" variant="ghost" style={styles.control} disabled={!canUndo} onPress={undo} />
-        <Button label="Reset" variant="ghost" style={styles.control} onPress={resetLevel} />
-        <Button label="Redo" variant="ghost" style={styles.control} disabled={!canRedo} onPress={redo} />
+        <Button label="Undo" variant="bevelSecondary" style={styles.control} disabled={!canUndo} onPress={undo} />
+        <Button label="Reset" variant="bevelSecondary" style={styles.control} onPress={resetLevel} />
+        <Button label="Redo" variant="bevel" style={styles.control} disabled={!canRedo} onPress={redo} />
       </View>
 
       {levelCompleted && (
@@ -141,16 +141,28 @@ const styles = StyleSheet.create({
   },
   headerCenter: {
     alignItems: 'center',
-    gap: 2,
+    gap: 6,
   },
   levelName: {
     color: COLORS.text,
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 6,
   },
   stats: {
-    color: COLORS.subtle,
+    color: '#CBD5E1',
     fontSize: 13,
+    fontWeight: '600',
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    paddingVertical: 4,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    overflow: 'hidden',
   },
   boardArea: {
     flex: 1,

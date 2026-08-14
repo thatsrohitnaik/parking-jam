@@ -238,6 +238,8 @@ export function CarView({ car, tileSize, onMove }: CarViewProps) {
   return (
     <GestureDetector gesture={pan}>
       <Animated.View style={[styles.wrap, { width, height }, animatedStyle]}>
+        {/* grounded drop shadow so the vehicle floats above the asphalt */}
+        <View style={[styles.shadow, { width, height, borderRadius: bodyR, top: height * 0.06 }]} />
         {car.red && (
           <Animated.View
             style={[
@@ -278,6 +280,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     top: 0,
+  },
+  shadow: {
+    position: 'absolute',
+    left: 0,
+    backgroundColor: 'rgba(0,0,0,0.42)',
+    shadowColor: '#000',
+    shadowOpacity: 0.55,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
   glow: {
     position: 'absolute',
