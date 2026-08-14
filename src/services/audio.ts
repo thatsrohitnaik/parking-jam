@@ -6,8 +6,8 @@ let musicActive = false;
 
 function getPlayer(): AudioPlayer {
   if (!player) {
-    // Local asset bundled with the app (see assets/Pixel Pop.wav).
-    player = createAudioPlayer(require('../../assets/Pixel Pop.wav'));
+    // Local asset bundled with the app (see assets/bg-music.mp3).
+    player = createAudioPlayer(require('../../assets/bg-music.mp3'));
     player.loop = true;
   }
   return player;
