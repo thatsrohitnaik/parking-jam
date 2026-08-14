@@ -1,37 +1,62 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { useParkingStore } from '../store/gameStore';
 import { COLORS } from '../utils/theme';
 import { LEVELS } from '../engine/levels';
+import { LevelCard } from '../components/LevelCard';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'LevelSelect'>;
 
 export default function LevelSelectScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const startLevel = useParkingStore((s) => s.startLevel);
+  const progress = useParkingStore((s) => s.progress);
+  const maxUnlocked = useParkingStore((s) => s.maxUnlocked);
+
+  const pad = 16;
+  const gap = 12;
+  const cols = width > 480 ? 4 : 3;
+  const cardW = (width - pad * 2 - gap * (cols - 1)) / cols;
 
   const choose = (index: number) => {
     startLevel(index);
     navigation.navigate('Game');
   };
 
+  const total = LEVELS.length;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Choose Level</Text>
-      <ScrollView contentContainerStyle={styles.list}>
-        {Array.from({ length: LEVELS.length }, (_, i) => i + 1).map((n) => (
-          <Pressable
-            key={n}
-            onPress={() => choose(n - 1)}
-            style={({ pressed }) => [styles.card, pressed && { opacity: 0.8 }]}
-          >
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{n}</Text>
+    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
+      <View style={styles.header}>
+        <Pressable style={styles.back} onPress={() => navigation.goBack()} hitSlop={12}>
+          <Text style={styles.backText}>‹</Text>
+        </Pressable>
+        <Text style={styles.title}>Levels</Text>
+        <View style={styles.back} />
+      </View>
+
+      <ScrollView contentContainerStyle={[styles.grid, { paddingHorizontal: pad, gap }]}>
+        {Array.from({ length: total }, (_, i) => {
+          const n = i + 1;
+          const locked = i > maxUnlocked;
+          const stars = progress[i]?.stars ?? 0;
+          const highlighted = i === maxUnlocked && i < total;
+          return (
+            <View key={n} style={{ width: cardW }}>
+              <LevelCard
+                number={n}
+                stars={stars}
+                locked={locked}
+                highlighted={highlighted}
+                onPress={() => choose(i)}
+              />
             </View>
-            <Text style={styles.cardLabel}>Level {n}</Text>
-          </Pressable>
-        ))}
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -41,45 +66,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.screen,
-    paddingTop: 60,
-    paddingHorizontal: 24,
   },
-  title: {
-    color: COLORS.text,
-    fontSize: 28,
-    fontWeight: '800',
-    marginBottom: 24,
-  },
-  list: {
-    gap: 14,
-    paddingBottom: 40,
-  },
-  card: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    backgroundColor: COLORS.card,
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#334155',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
-  badge: {
-    width: 44,
-    height: 44,
+  back: {
+    width: 36,
+    height: 36,
     borderRadius: 12,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: {
+  backText: {
     color: COLORS.text,
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 26,
+    lineHeight: 28,
+    marginTop: -2,
   },
-  cardLabel: {
+  title: {
     color: COLORS.text,
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingBottom: 40,
   },
 });

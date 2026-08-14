@@ -10,6 +10,9 @@ export const COLORS = {
   primary: '#3B82F6',
   text: '#F8FAFC',
   subtle: '#94A3B8',
+  star: '#FBBF24',
+  success: '#22C55E',
+  danger: '#F87171',
 };
 
 const PALETTE = [

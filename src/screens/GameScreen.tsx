@@ -5,6 +5,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { Board, BOARD_FRAME_PADDING } from '../components/Board';
 import { Button } from '../components/Button';
+import { WinModal } from '../components/WinModal';
 import { useHaptics } from '../hooks/useHaptics';
 import { useParkingStore } from '../store/gameStore';
 import type { Direction } from '../engine/types';
@@ -28,13 +29,15 @@ export default function GameScreen({ navigation }: Props) {
   const canRedo = useParkingStore((s) => s.canRedo);
   const finished = useParkingStore((s) => s.finished);
   const levelCompleted = useParkingStore((s) => s.levelCompleted);
+  const lastResult = useParkingStore((s) => s.lastResult);
+  const retryLast = useParkingStore((s) => s.retryLast);
+  const dismissLevelCompleted = useParkingStore((s) => s.dismissLevelCompleted);
 
   const tryMove = useParkingStore((s) => s.tryMove);
   const undo = useParkingStore((s) => s.undo);
   const redo = useParkingStore((s) => s.redo);
   const resetLevel = useParkingStore((s) => s.resetLevel);
   const restart = useParkingStore((s) => s.restart);
-  const dismissLevelCompleted = useParkingStore((s) => s.dismissLevelCompleted);
 
   const { success } = useHaptics();
 
@@ -50,8 +53,6 @@ export default function GameScreen({ navigation }: Props) {
     },
     [tryMove, success],
   );
-
-  const completedLevel = levelNumber - 1;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
@@ -78,15 +79,19 @@ export default function GameScreen({ navigation }: Props) {
         <Button label="Redo" variant="bevel" style={styles.control} disabled={!canRedo} onPress={redo} />
       </View>
 
-      {levelCompleted && (
-        <View style={styles.overlay}>
-          <View style={styles.modal}>
-            <View style={styles.winBadge} />
-            <Text style={styles.modalTitle}>Level {completedLevel} Complete!</Text>
-            <Text style={styles.modalText}>The red car escaped. On to the next one.</Text>
-            <Button label="Keep Going" onPress={dismissLevelCompleted} style={styles.modalButton} />
-          </View>
-        </View>
+      {levelCompleted && lastResult && (
+        <WinModal
+          levelNumber={lastResult.levelNumber}
+          moves={lastResult.moves}
+          par={lastResult.par}
+          stars={lastResult.stars}
+          onNext={dismissLevelCompleted}
+          onRetry={retryLast}
+          onHome={() => {
+            dismissLevelCompleted();
+            navigation.navigate('Home');
+          }}
+        />
       )}
 
       {finished && (
