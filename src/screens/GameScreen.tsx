@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-import { Board } from '../components/Board';
+import { Board, BOARD_FRAME_PADDING } from '../components/Board';
 import { Button } from '../components/Button';
 import { useHaptics } from '../hooks/useHaptics';
 import { useParkingStore } from '../store/gameStore';
@@ -38,7 +38,7 @@ export default function GameScreen({ navigation }: Props) {
 
   const { success } = useHaptics();
 
-  const tileSize = Math.floor((width - 24) / cols);
+  const tileSize = Math.floor((width - 24 - 2 * BOARD_FRAME_PADDING) / cols);
 
   const onMove = useCallback(
     (id: string, dir: Direction, distance: number) => {
