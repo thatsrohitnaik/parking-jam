@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { Button } from '../components/Button';
 import { useParkingStore } from '../store/gameStore';
+import { startBackgroundMusic } from '../services/audio';
 import { CAR_THEME_ORDER, CAR_THEMES, COLORS, getCarTheme } from '../utils/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
@@ -14,6 +15,7 @@ export default function HomeScreen({ navigation }: Props) {
   const setSettings = useParkingStore((s) => s.setSettings);
 
   const startGame = () => {
+    startBackgroundMusic();
     restart();
     navigation.navigate('Game');
   };
@@ -55,7 +57,7 @@ export default function HomeScreen({ navigation }: Props) {
 
       <View style={styles.menu}>
         <Button label="Play" onPress={startGame} />
-        <Button label="Choose Level" variant="ghost" onPress={() => navigation.navigate('LevelSelect')} />
+        <Button label="Choose Level" variant="ghost" onPress={() => { startBackgroundMusic(); navigation.navigate('LevelSelect'); }} />
       </View>
     </View>
   );
