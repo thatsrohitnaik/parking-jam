@@ -9,6 +9,7 @@ export interface LevelProgress {
 export interface PersistedState {
   progress: Record<number, LevelProgress>;
   maxUnlocked: number;
+  hints: number;
   settings: GameSettings;
 }
 
@@ -22,6 +23,7 @@ export async function loadPersisted(): Promise<PersistedState | null> {
     return {
       progress: parsed.progress ?? {},
       maxUnlocked: parsed.maxUnlocked ?? 0,
+      hints: parsed.hints ?? 0,
       settings: parsed.settings as GameSettings,
     };
   } catch {

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -44,6 +44,19 @@ export function CarView({ car, tileSize, onMove }: CarViewProps) {
 
   // Brief red edge flash when a drag is blocked.
   const blocked = useSharedValue(0);
+
+  // Hint highlight: pulse the suggested car and show a direction arrow.
+  const hint = useParkingStore((s) => s.hint);
+  const hinted = hint?.id === car.id;
+  const hintPulse = useSharedValue(0);
+  useEffect(() => {
+    if (!hinted) return;
+    hintPulse.value = withRepeat(withTiming(1, { duration: 800 }), -1, true);
+  }, [hinted, hintPulse]);
+
+  const hintRingStyle = useAnimatedStyle(() => ({
+    opacity: hinted ? 0.35 + hintPulse.value * 0.5 : 0,
+  }), [hinted]);
 
   // Pulsing glow for the target (red) car.
   const glow = useSharedValue(0);
@@ -268,6 +281,14 @@ export function CarView({ car, tileSize, onMove }: CarViewProps) {
 
   const glowPad = tileSize * 0.16;
 
+  // Direction arrow for the hint, parked at the car's leading edge.
+  const t = 9;
+  const arrowRot = hint?.dir === 'R' ? 90 : hint?.dir === 'D' ? 180 : hint?.dir === 'L' ? -90 : 0;
+  let arrowPos: StyleProp<ViewStyle> = { top: -t - 2, left: width / 2 - t };
+  if (hint?.dir === 'R') arrowPos = { right: -t - 2, top: height / 2 - t };
+  else if (hint?.dir === 'L') arrowPos = { left: -t - 2, top: height / 2 - t };
+  else if (hint?.dir === 'D') arrowPos = { bottom: -t - 2, left: width / 2 - t };
+
   return (
     <GestureDetector gesture={pan}>
       <Animated.View style={[styles.wrap, { width, height }, animatedStyle]}>
@@ -287,6 +308,12 @@ export function CarView({ car, tileSize, onMove }: CarViewProps) {
               },
               glowStyle,
             ]}
+          />
+        )}
+        {hinted && (
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.hintRing, { width, height, borderRadius: bodyR + 3 }, hintRingStyle]}
           />
         )}
         <Animated.View
@@ -312,6 +339,12 @@ export function CarView({ car, tileSize, onMove }: CarViewProps) {
             blockStyle,
           ]}
         />
+        {hinted && (
+          <View
+            pointerEvents="none"
+            style={[styles.hintArrow, arrowPos, { transform: [{ rotate: `${arrowRot}deg` }] }]}
+          />
+        )}
       </Animated.View>
     </GestureDetector>
   );
@@ -339,6 +372,25 @@ const styles = StyleSheet.create({
     top: 0,
     borderWidth: 3,
     borderColor: '#F87171',
+  },
+  hintRing: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    borderWidth: 4,
+    borderColor: '#FBBF24',
+  },
+  hintArrow: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    borderStyle: 'solid',
+    borderLeftWidth: 9,
+    borderRightWidth: 9,
+    borderBottomWidth: 14,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#FBBF24',
   },
   glow: {
     position: 'absolute',

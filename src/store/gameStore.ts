@@ -3,6 +3,7 @@ import { Game } from '../engine/Game';
 import { Level } from '../engine/Level';
 import { LEVELS } from '../engine/levels';
 import { getPar } from '../engine/par';
+import { getHintMove, type HintMove } from '../engine/hint';
 import { loadPersisted, savePersisted, type LevelProgress } from './persistence';
 import type { Direction } from '../engine/types';
 import type { CarThemeName } from '../utils/theme';
@@ -42,6 +43,8 @@ interface ParkingStore {
   progress: Record<number, LevelProgress>;
   maxUnlocked: number;
   lastResult: { levelNumber: number; moves: number; par: number; stars: number } | null;
+  hints: number;
+  hint: { id: string; dir: Direction } | null;
 
   tryMove: (id: string, dir: Direction, distance: number) => number;
   undo: () => void;
@@ -51,6 +54,8 @@ interface ParkingStore {
   startLevel: (index: number) => void;
   dismissLevelCompleted: () => void;
   retryLast: () => void;
+  clearHint: () => void;
+  awardHint: (move: HintMove) => void;
   hydrate: () => void;
   persist: () => void;
   setSettings: (settings: Partial<GameSettings>) => void;
@@ -106,6 +111,8 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
   progress: {},
   maxUnlocked: 0,
   lastResult: null,
+  hints: 0,
+  hint: null,
   settings: createDefaultSettings(),
 
   tryMove: (id, dir, distance) => {
@@ -140,6 +147,7 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
       set((state) => ({
         ...snapshot(game),
         levelCompleted: won && !game.isFinished(),
+        hint: null,
       }));
     }
     return moved;
@@ -162,7 +170,7 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
   resetLevel: () => {
     const game = get().game;
     game.reset();
-    set((state) => ({ ...snapshot(game), levelCompleted: false }));
+    set((state) => ({ ...snapshot(game), levelCompleted: false, hint: null }));
   },
 
   restart: () => {
@@ -175,7 +183,7 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
     const game = new Game();
     game.levelNumber = index + 1;
     game.level = new Level(LEVELS[index]);
-    set((state) => ({ game, ...snapshot(game), levelCompleted: false, currentPar: getPar(index) }));
+    set((state) => ({ game, ...snapshot(game), levelCompleted: false, currentPar: getPar(index), hint: null }));
   },
 
   dismissLevelCompleted: () => set({ levelCompleted: false }),
@@ -186,6 +194,16 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
     get().startLevel(last.levelNumber - 1);
   },
 
+  clearHint: () => set({ hint: null }),
+
+  awardHint: (move) => {
+    set((state) => ({
+      hints: state.hints + 1,
+      hint: { id: move.id, dir: move.dir },
+    }));
+    get().persist();
+  },
+
   hydrate: () => {
     loadPersisted()
       .then((data) => {
@@ -193,6 +211,7 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
         set((state) => ({
           progress: data.progress ?? {},
           maxUnlocked: data.maxUnlocked ?? 0,
+          hints: data.hints ?? 0,
           settings: data.settings ? { ...state.settings, ...data.settings } : state.settings,
         }));
       })
@@ -200,8 +219,8 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
   },
 
   persist: () => {
-    const { progress, maxUnlocked, settings } = get();
-    savePersisted({ progress, maxUnlocked, settings });
+    const { progress, maxUnlocked, hints, settings } = get();
+    savePersisted({ progress, maxUnlocked, hints, settings });
   },
 
   setSettings: (next) => {

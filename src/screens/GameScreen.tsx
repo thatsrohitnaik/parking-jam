@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -6,8 +6,10 @@ import type { RootStackParamList } from '../navigation/AppNavigator';
 import { Board, BOARD_FRAME_PADDING } from '../components/Board';
 import { Button } from '../components/Button';
 import { WinModal } from '../components/WinModal';
+import { HintModal } from '../components/HintModal';
 import { useHaptics } from '../hooks/useHaptics';
 import { useParkingStore } from '../store/gameStore';
+import { getHintMove, type HintMove } from '../engine/hint';
 import type { Direction } from '../engine/types';
 import { COLORS } from '../utils/theme';
 
@@ -41,7 +43,21 @@ export default function GameScreen({ navigation }: Props) {
 
   const { success } = useHaptics();
 
+  const game = useParkingStore((s) => s.game);
+  const awardHint = useParkingStore((s) => s.awardHint);
+  const hints = useParkingStore((s) => s.hints);
+  const [showHint, setShowHint] = useState(false);
+  const [hintMove, setHintMove] = useState<HintMove | null>(null);
+
   const tileSize = Math.floor((width - 24 - 2 * BOARD_FRAME_PADDING) / cols);
+
+  const onHintPress = useCallback(() => {
+    if (levelCompleted || finished) return;
+    const move = getHintMove(game.getLevel().toData());
+    if (!move) return;
+    setHintMove(move);
+    setShowHint(true);
+  }, [game, levelCompleted, finished]);
 
   const onMove = useCallback(
     (id: string, dir: Direction, distance: number) => {
@@ -77,6 +93,7 @@ export default function GameScreen({ navigation }: Props) {
         <Button label="Undo" variant="bevelSecondary" style={styles.control} disabled={!canUndo} onPress={undo} />
         <Button label="Reset" variant="bevelSecondary" style={styles.control} onPress={resetLevel} />
         <Button label="Redo" variant="bevel" style={styles.control} disabled={!canRedo} onPress={redo} />
+        <Button label={`Hint (${hints})`} variant="bevel" style={styles.control} onPress={onHintPress} />
       </View>
 
       {levelCompleted && lastResult && (
@@ -113,6 +130,16 @@ export default function GameScreen({ navigation }: Props) {
             <Button label="Choose Level" variant="ghost" onPress={() => navigation.navigate('LevelSelect')} style={styles.modalButton} />
           </View>
         </View>
+      )}
+
+      {showHint && hintMove && (
+        <HintModal
+          onReward={() => {
+            awardHint(hintMove);
+            setShowHint(false);
+          }}
+          onClose={() => setShowHint(false)}
+        />
       )}
     </View>
   );
