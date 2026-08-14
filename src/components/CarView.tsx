@@ -42,8 +42,6 @@ export function CarView({ car, tileSize, onMove }: CarViewProps) {
 
   const { light: hLight, error: hError } = useHaptics();
 
-  // Selection feedback (touch): scale-up, ring + axis guide fade in.
-  const selected = useSharedValue(0);
   // Brief red edge flash when a drag is blocked.
   const blocked = useSharedValue(0);
 
@@ -61,15 +59,7 @@ export function CarView({ car, tileSize, onMove }: CarViewProps) {
     opacity: car.red ? 0.25 + glow.value * 0.4 : 0,
   }), [car.red]);
 
-  // Scale the body slightly while the car is held/selected.
-  const carStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + selected.value * 0.05 }],
-  }), [selected]);
-
-  // Selection ring fades in with `selected`.
-  const ringStyle = useAnimatedStyle(() => ({
-    opacity: selected.value * 0.9,
-  }), [selected]);
+  // Brief red edge flash when a drag is blocked.
   const blockStyle = useAnimatedStyle(() => ({
     opacity: blocked.value,
   }), [blocked]);
@@ -89,10 +79,9 @@ export function CarView({ car, tileSize, onMove }: CarViewProps) {
       // the effect above, so the car slides instead of teleporting.
       dragX.value = withSpring(0, SPRING);
       dragY.value = withSpring(0, SPRING);
-      selected.value = withTiming(0, { duration: 120 });
       draggingRef.current = false;
     },
-    [dragX, dragY, selected],
+    [dragX, dragY],
   );
 
   const pan = Gesture.Pan()
@@ -100,7 +89,6 @@ export function CarView({ car, tileSize, onMove }: CarViewProps) {
     .maxPointers(1)
     .onStart(() => {
       draggingRef.current = true;
-      selected.value = withTiming(1, { duration: 120 });
       runOnJS(hLight)();
     })
     .onChange((e) => {
@@ -121,7 +109,6 @@ export function CarView({ car, tileSize, onMove }: CarViewProps) {
       const raw = active.value;
       const distance = Math.round(Math.abs(raw) / t);
       if (distance === 0) {
-        selected.value = withTiming(0, { duration: 120 });
         // Only treat as a "blocked" attempt if the player clearly tried to
         // move into something (otherwise it was just a tap/release).
         if (Math.abs(raw) > t * 0.25) {
@@ -302,19 +289,9 @@ export function CarView({ car, tileSize, onMove }: CarViewProps) {
             ]}
           />
         )}
-        {/* selection ring */}
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.ring,
-            { width, height, borderRadius: bodyR + 3 },
-            ringStyle,
-          ]}
-        />
         <Animated.View
           style={[
             styles.car,
-            carStyle,
             { width, height, backgroundColor, borderRadius: bodyR, overflow: 'hidden' },
           ]}
         >
@@ -355,13 +332,6 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 8 },
     elevation: 6,
-  },
-  ring: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.85)',
   },
   blockFlash: {
     position: 'absolute',
