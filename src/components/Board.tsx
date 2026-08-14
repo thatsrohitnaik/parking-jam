@@ -214,6 +214,11 @@ export function Board({ rows, cols, tiles, cars, tileSize, levelKey = 0, onMove 
 
         {/* inner vignette frame */}
         <View style={[StyleSheet.absoluteFill, { borderWidth: 6, borderColor: 'rgba(0,0,0,0.25)', borderRadius: 10 }]} pointerEvents="none" />
+
+        {/* vehicles (rendered last so they sit above the background) */}
+        {cars.map((car) => (
+          <CarView key={`${levelKey}-${car.id}`} car={car} tileSize={tileSize} onMove={onMove} />
+        ))}
       </View>
     </View>
   );
