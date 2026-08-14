@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { COLORS } from '../utils/theme';
 import { Button } from './Button';
+import { AdBanner } from './AdBanner';
 
 interface WinModalProps {
   levelNumber: number;
@@ -48,6 +49,7 @@ export function WinModal({ levelNumber, moves, par, stars, onNext, onRetry, onHo
         <Text style={styles.moves}>
           Moves {moves} · Par {par}
         </Text>
+        <AdBanner />
         <Button label="Next Level" onPress={onNext} style={styles.full} />
         <View style={styles.row}>
           <Button label="Retry" variant="bevelSecondary" onPress={onRetry} style={styles.flex} />
