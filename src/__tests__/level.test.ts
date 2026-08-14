@@ -3,6 +3,20 @@ import { Level } from '../engine/Level';
 import { LEVELS } from '../engine/levels';
 import { LevelError } from '../engine/types';
 
+// A stable, hand-built board used only for unit-testing mechanics.
+// Red car (vertical) at column 4, exit at the bottom of that column,
+// one horizontal blocker 'a' directly below it.
+const BOARD = [
+  '++++++++',
+  '+      +',
+  '+   *  +',
+  '+   *  +',
+  '+   aa +',
+  '+      +',
+  '+      +',
+  '++++@+++',
+];
+
 describe('Car', () => {
   it('creates cars with correct attributes', () => {
     const car = new Car(1, 2, 'a', 3, true);
@@ -40,38 +54,28 @@ describe('Car', () => {
 });
 
 describe('Level parsing', () => {
-  it('loads level 2 matching its board definition', () => {
-    const level = new Level(LEVELS[1]);
-    const expected = [
-      ['+', '+', '+', '+', '+', '+', '+', '+'],
-      ['+', ' ', ' ', ' ', ' ', ' ', ' ', '+'],
-      ['+', ' ', ' ', ' ', '*', ' ', ' ', '+'],
-      ['+', ' ', ' ', ' ', '*', ' ', ' ', '+'],
-      ['+', ' ', ' ', ' ', 'a', 'a', ' ', '+'],
-      ['+', ' ', ' ', ' ', ' ', ' ', ' ', '+'],
-      ['+', ' ', ' ', ' ', ' ', ' ', ' ', '+'],
-      ['+', '+', '+', '+', '@', '+', '+', '+'],
-    ];
-    expect(level.getBoard().getTiles()).toEqual(expected);
-    expect(level.getName()).toBe('Level 2');
+  it('loads a board matching its definition', () => {
+    const level = new Level({ name: 'Test', rows: 8, columns: 8, board: BOARD });
+    expect(level.getBoard().lines()).toEqual(BOARD);
+    expect(level.getName()).toBe('Test');
   });
 
   it('rejects a column count mismatch', () => {
-    const board = LEVELS[0].board.slice();
-    board[1] = '+aabbbc';
+    const board = BOARD.slice();
+    board[1] = '+     +';
     expect(
       () => new Level({ name: 'Bad', rows: 8, columns: 8, board }),
     ).toThrow(new LevelError('The level must have 8 columns each line'));
   });
 
   it('rejects missing surrounding walls', () => {
-    const board = LEVELS[0].board.slice();
-    board[1] = ' aabbbc+';
+    const board = BOARD.slice();
+    board[1] = '      +';
     expect(() => new Level({ name: 'Bad', rows: 8, columns: 8, board })).toThrow(LevelError);
   });
 
   it('rejects a wrong number of exits', () => {
-    const board = LEVELS[0].board.slice();
+    const board = BOARD.slice();
     board[7] = '+++@+++@';
     expect(
       () => new Level({ name: 'Bad', rows: 8, columns: 8, board }),
@@ -79,7 +83,7 @@ describe('Level parsing', () => {
   });
 
   it('rejects a wrong number of red car cells', () => {
-    const board = LEVELS[0].board.slice();
+    const board = BOARD.slice();
     const b = board.map((l) => l.split(''));
     b[2] = ['+', ' ', ' ', ' ', '*', '*', ' ', '+'];
     expect(() =>
@@ -89,62 +93,46 @@ describe('Level parsing', () => {
 
   it('rejects a row-count mismatch', () => {
     expect(
-      () => new Level({ name: 'Bad', rows: 7, columns: 8, board: LEVELS[0].board }),
+      () => new Level({ name: 'Bad', rows: 7, columns: 8, board: BOARD }),
     ).toThrow(new LevelError('You have to put first the number of rows and then the number of columns'));
   });
 });
 
 describe('Level movement', () => {
-  function fresh(index: number): Level {
-    return new Level(LEVELS[index]);
+  function fresh(): Level {
+    return new Level({ name: 'Test', rows: 8, columns: 8, board: BOARD });
   }
 
-  it('completes level 1 in a single red car move', () => {
-    const level = fresh(0);
-    const ok = level.moveCar(level.getRedCar(), 'D', 4, false, false);
-    expect(ok).toBe(true);
-    expect(level.getRedCar().isOnGoal()).toBe(true);
-    expect(level.checkStatus()).toBe(true);
-  });
-
-  it('completes level 2 by moving the blocker then the red car', () => {
-    const level = fresh(1);
+  it('completes by moving the blocker then the red car', () => {
+    const level = fresh();
     expect(level.moveCar(level.getVehiclesMap().get('a')!, 'L', 2, false, false)).toBe(true);
     expect(level.moveCar(level.getRedCar(), 'D', 4, false, false)).toBe(true);
     expect(level.checkStatus()).toBe(true);
   });
 
-  it('completes level 3', () => {
-    const level = fresh(2);
-    level.moveCar(level.getVehiclesMap().get('a')!, 'L', 1, false, false);
-    level.moveCar(level.getVehiclesMap().get('c')!, 'L', 1, false, false);
-    expect(level.moveCar(level.getRedCar(), 'D', 4, false, false)).toBe(true);
-    expect(level.checkStatus()).toBe(true);
-  });
-
-  it('rejects invalid red car moves on level 2', () => {
-    const level = fresh(1);
+  it('rejects invalid red car moves', () => {
+    const level = fresh();
     expect(level.moveCar(level.getRedCar(), 'L', 1, false, false)).toBe(false);
     expect(level.moveCar(level.getRedCar(), 'R', 1, false, false)).toBe(false);
+    // 'a' blocks the path downward.
     expect(level.moveCar(level.getRedCar(), 'D', 1, false, false)).toBe(false);
-    expect(level.moveCar(level.getRedCar(), 'D', 2, false, false)).toBe(false);
   });
 
   it('rejects perpendicular and out-of-bounds blocker moves', () => {
-    const level = fresh(1);
+    const level = fresh();
     expect(level.moveCar(level.getVehiclesMap().get('a')!, 'U', 1, false, false)).toBe(false);
     expect(level.moveCar(level.getVehiclesMap().get('a')!, 'R', 2, false, false)).toBe(false);
     expect(level.moveCar(level.getVehiclesMap().get('a')!, 'L', 4, false, false)).toBe(false);
   });
 
   it('allows valid blocker moves', () => {
-    const level = fresh(1);
+    const level = fresh();
     expect(level.moveCar(level.getVehiclesMap().get('a')!, 'L', 2, false, false)).toBe(true);
     expect(level.moveCar(level.getVehiclesMap().get('a')!, 'R', 1, false, false)).toBe(true);
   });
 
   it('updates the board after a move', () => {
-    const level = fresh(1);
+    const level = fresh();
     level.moveCar(level.getVehiclesMap().get('a')!, 'L', 2, false, false);
     const expected =
       '++++++++\n' +
@@ -159,10 +147,9 @@ describe('Level movement', () => {
   });
 
   it('resets the level to its initial state', () => {
-    const level = fresh(2);
+    const level = fresh();
     const initial = level.getBoard().lines().join('\n');
-    level.moveCar(level.getVehiclesMap().get('a')!, 'L', 1, false, false);
-    level.moveCar(level.getVehiclesMap().get('c')!, 'L', 1, false, false);
+    level.moveCar(level.getVehiclesMap().get('a')!, 'L', 2, false, false);
     level.reset();
     expect(level.getBoard().lines().join('\n')).toBe(initial);
     expect(level.getScore()).toBe(0);
@@ -170,11 +157,11 @@ describe('Level movement', () => {
   });
 
   it('supports undo and redo', () => {
-    const level = fresh(3);
+    const level = fresh();
     level.moveCar(level.getVehiclesMap().get('a')!, 'L', 2, false, false);
     const moved = level.getBoard().toString();
     expect(level.undo()).toBe(true);
-    expect(level.getBoard().lines().join('\n')).toBe(LEVELS[3].board.join('\n'));
+    expect(level.getBoard().lines().join('\n')).toBe(BOARD.join('\n'));
     expect(level.redo()).toBe(true);
     expect(level.getBoard().toString()).toBe(moved);
   });

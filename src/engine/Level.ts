@@ -377,6 +377,17 @@ export class Level {
     return this.score;
   }
 
+  // Serialize the current board back into LevelData (used by the solver and
+  // the level generator).
+  toData(): LevelData {
+    return {
+      name: this.getName(),
+      rows: this.board.getNRows(),
+      columns: this.board.getNColumns(),
+      board: this.board.lines(),
+    };
+  }
+
   toString(): string {
     return '\n' + this.board.toString();
   }
